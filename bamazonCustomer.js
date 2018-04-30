@@ -86,7 +86,7 @@ function buyItem() {
                 }
 
                 // determine if there was enough stock, this is not working as the answer.stock_quantity is returning undefined 
-                if (answer.buy < chosenItem.stock_quantity) {
+                if (parseInt(answer.buy) > parseInt(chosenItem.stock_quantity)) {
                     // if there is enough stock this updates the stock quant to the new amount
                     connection.query(
                         "UPDATE auctions SET ? WHERE ?",
@@ -106,6 +106,8 @@ function buyItem() {
                 else {
                     // If there is not enough stock, let the customer know and restart
                     console.log("Sorry! There are not enough in stock to fulfill your order.");
+                    // I logged these out to see what they are returning, and I cannot fifgure out why I cant get this app to do a simple greater than/less than calculation
+                    // I have tried using parseInt and I have fliipped the greater than/less than and I just can't get it. But the rest of the code is working. 
                     console.log(answer.buy);
                     console.log(chosenItem.stock_quantity);
                     // console.log(answer);
