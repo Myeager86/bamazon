@@ -18,7 +18,7 @@ connection.connect(function (err) {
     console.log("connected as id " + connection.threadId + "\n");
     start();
 });
-
+// runs on initial load, either runs buy and item or leave store. 
 function start() {
     inquirer
         .prompt({
@@ -30,14 +30,13 @@ function start() {
         .then(function (buyOrLeave) {
             if (buyOrLeave.action === "Buy an Item") {
                 buyItem();
-                console.log("inside choices");
             } else {
                 leaveStore();
-                console.log("inside else");
+                console.log("Goodbye! Thank you for visiting our store!");
             }
         });
 }
-
+// the only function I built that exits the CLI
 function leaveStore() {
     connection.end();
 }
@@ -53,10 +52,10 @@ function leaveStore() {
 //   }
 
 function buyItem() {
-    // query the database for all items being auctioned
+    // query the database for all prodcuts in the database
     connection.query("SELECT * FROM products", function (err, res) {
         if (err) throw err;
-        // once you have the items, prompt the user for which they'd like to bid on
+        // display a list of available items and query what they would like to buy
         inquirer
             .prompt([
                 {
@@ -78,7 +77,7 @@ function buyItem() {
                 }
             ])
             .then(function (answer) {
-                // get the information of the chosen item
+                // runs and creates a var for the chosen item
                 var chosenItem;
                 for (var i = 0; i < res.length; i++) {
                     if (res[i].product_name === answer.choice) {
@@ -86,16 +85,17 @@ function buyItem() {
                     }
                 }
 
-                // determine if bid was high enough
-                if (chosenItem.stock_quantity < parseInt(answer.stock_quantity)) {
-                    // bid was high enough, so update db, let the user know, and start over
+                // determine if there was enough stock, this is not working as the answer.stock_quantity is returning undefined 
+                if (answer.buy < chosenItem.stock_quantity) {
+                    // if there is enough stock this updates the stock quant to the new amount
                     connection.query(
                         "UPDATE auctions SET ? WHERE ?",
                         [
                             {
-                                stock_quantity: answer.buy
+                                stock_quantity: Math.floor(chosenItem.stock_quanity - answer.buy)
                             }
                         ],
+                        // runs if there was enough stock and displays the total price
                         function (error) {
                             if (error) throw err;
                             console.log("Congratulations! Your item is on the way! Your total cost is " + Math.floor(chosenItem.price*answer.buy));
@@ -104,9 +104,11 @@ function buyItem() {
                     );
                 }
                 else {
-                    // bid wasn't high enough, so apologize and start over
+                    // If there is not enough stock, let the customer know and restart
                     console.log("Sorry! There are not enough in stock to fulfill your order.");
-                    console.log(answer.stock_quantity);
+                    console.log(answer.buy);
+                    console.log(chosenItem.stock_quantity);
+                    // console.log(answer);
                     start();
                 }
             });
